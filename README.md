@@ -9,7 +9,7 @@ FastAPI-based authentication microservice with email verification, JWT authentic
 - Password reset via email
 - User profile management
 - PostgreSQL database
-- Email delivery via Resend
+- Email delivery via SMTP
 
 ## Quick Start
 
