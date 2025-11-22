@@ -6,8 +6,15 @@ from app.models.user import User
 from app.schemas.user import UserCreate
 from app.crud import user as user_crud
 from app.core.security import create_access_token, create_refresh_token
-from app.services.email_service import email_service
+from app.core.config import settings
+from app.services.message_service import message_service
 from app.services.token_service import token_service
+from app.schemas.events import (
+    EmailVerificationEvent,
+    WelcomeEmailEvent,
+    PasswordResetEvent,
+    PasswordChangedEvent
+)
 
 
 class AuthService:
@@ -44,12 +51,15 @@ class AuthService:
         # Generar token de verificación
         verification_token = token_service.create_verification_token(db, user)
 
-        # Enviar email de verificación
-        email_service.send_verification_email(
+        # Publicar evento de verificación a RabbitMQ
+        event = EmailVerificationEvent(
+            user_id=user.id,
             email=user.email,
-            user_name=user.name,
-            verification_token=verification_token
+            name=user.name,
+            verification_token=verification_token,
+            frontend_url=settings.FRONTEND_URL
         )
+        message_service.publish_verification_email(event)
 
         return user
 
@@ -146,11 +156,13 @@ class AuthService:
                 detail=message
             )
 
-        # Enviar email de bienvenida
-        email_service.send_welcome_email(
+        # Publicar evento de bienvenida a RabbitMQ
+        event = WelcomeEmailEvent(
+            user_id=user.id,
             email=user.email,
-            user_name=user.name
+            name=user.name
         )
+        message_service.publish_welcome_email(event)
 
         return user
 
@@ -183,12 +195,15 @@ class AuthService:
         # Regenerar token
         verification_token = token_service.resend_verification_token(db, user)
 
-        # Reenviar email
-        email_service.send_verification_email(
+        # Publicar evento de verificación a RabbitMQ
+        event = EmailVerificationEvent(
+            user_id=user.id,
             email=user.email,
-            user_name=user.name,
-            verification_token=verification_token
+            name=user.name,
+            verification_token=verification_token,
+            frontend_url=settings.FRONTEND_URL
         )
+        message_service.publish_verification_email(event)
 
     @staticmethod
     def request_password_reset(db: Session, email: str) -> None:
@@ -212,12 +227,15 @@ class AuthService:
         # Generar token de reset
         reset_token = token_service.create_reset_token(db, user)
 
-        # Enviar email de reset
-        email_service.send_password_reset_email(
+        # Publicar evento de reset de contraseña a RabbitMQ
+        event = PasswordResetEvent(
+            user_id=user.id,
             email=user.email,
-            user_name=user.name,
-            reset_token=reset_token
+            name=user.name,
+            reset_token=reset_token,
+            frontend_url=settings.FRONTEND_URL
         )
+        message_service.publish_password_reset_email(event)
 
     @staticmethod
     def reset_password(db: Session, token: str, new_password: str) -> None:
@@ -246,11 +264,13 @@ class AuthService:
         # Limpiar token de reset
         token_service.clear_reset_token(db, user)
 
-        # Enviar email de confirmación
-        email_service.send_password_changed_email(
+        # Publicar evento de cambio de contraseña a RabbitMQ
+        event = PasswordChangedEvent(
+            user_id=user.id,
             email=user.email,
-            user_name=user.name
+            name=user.name
         )
+        message_service.publish_password_changed_email(event)
 
 
 # Instancia única del servicio

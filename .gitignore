@@ -33,6 +33,8 @@ env/
 .env
 .env.local
 .env.*.local
+.env.docker
+.env.production
 
 # IDEs
 .vscode/
@@ -62,6 +64,11 @@ htmlcov/
 .mypy_cache/
 .dmypy.json
 dmypy.json
+htmlcov
+.coverage
+DOCKER.md
+pytest.ini
+coverage.xml
 
 Claude.md
 

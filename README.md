@@ -35,7 +35,7 @@ venv\Scripts\activate  # Windows
 pip install -r requirements.txt
 
 # Configure environment
-cp .env.example .env
+cp .env .env
 # Edit .env with your configuration
 ```
 

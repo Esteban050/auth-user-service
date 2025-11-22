@@ -13,8 +13,15 @@ class Settings(BaseSettings):
     API_V1_PREFIX: str = "/api/v1"
     DEBUG: bool = False
 
-    # Database
+    # Database - Supabase
     DATABASE_URL: str
+    SUPABASE_URL: str
+    SUPABASE_KEY: str
+
+    # RabbitMQ - CloudAMQP
+    RABBITMQ_URL: str
+    RABBITMQ_EXCHANGE: str = "notifications"
+    RABBITMQ_EXCHANGE_TYPE: str = "topic"
 
     # Security - JWT
     SECRET_KEY: str

@@ -33,14 +33,50 @@ app.include_router(api_router, prefix=settings.API_V1_PREFIX)
 @app.get("/health", tags=["Health"])
 def health_check():
     """
-    Endpoint de health check.
-    Retorna el estado del servicio.
+    Endpoint de health check básico.
+    Retorna el estado del servicio sin verificar dependencias.
+    Útil para load balancers y orquestadores.
     """
     return {
         "status": "healthy",
         "service": settings.APP_NAME,
         "version": "1.0.0"
     }
+
+
+# Readiness check endpoint
+@app.get("/ready", tags=["Health"])
+def readiness_check():
+    """
+    Endpoint de readiness check.
+    Verifica que el servicio esté listo para recibir tráfico.
+    Verifica conexión a base de datos.
+    """
+    from fastapi import status, HTTPException
+    from sqlalchemy import text
+    from app.db.session import SessionLocal
+
+    try:
+        # Verificar conexión a base de datos
+        db = SessionLocal()
+        db.execute(text("SELECT 1"))
+        db.close()
+
+        return {
+            "status": "ready",
+            "service": settings.APP_NAME,
+            "version": "1.0.0",
+            "database": "connected"
+        }
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail={
+                "status": "not ready",
+                "service": settings.APP_NAME,
+                "error": str(e)
+            }
+        )
 
 
 # Root endpoint
